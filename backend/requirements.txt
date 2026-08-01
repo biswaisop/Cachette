@@ -1,0 +1,34 @@
+# Core framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Validation / settings
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20   # needed for form data (login endpoint via OAuth2PasswordRequestForm)
+
+# AWS
+boto3==1.35.90
+
+# Redis
+redis==5.2.1
+
+# Celery (API needs this too, to dispatch tasks)
+celery==5.4.0
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.0
+httpx==0.28.1   # for FastAPI TestClient / async test requests
+
+# Dev quality (optional but recommended)
+ruff==0.8.4     # linting, replaces flake8+isort+black in one tool
