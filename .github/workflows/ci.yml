@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: test_filestorage
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dev -d test_filestorage"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: pip install -r requirements.txt
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/test_filestorage
+          SECRET_KEY: ci-test-secret-key
+
+      - name: Run tests
+        working-directory: ./backend
+        run: pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/test_filestorage
+          SECRET_KEY: ci-test-secret-key
