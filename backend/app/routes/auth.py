@@ -8,6 +8,8 @@ from app.service.auth_service import create_user, authenticate_user, create_refr
 from app.core.security import decode_token
 from app.service.auth_service import get_user_by_email
 from app.models.user import User
+from app.dependencies import get_current_user
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,3 +35,7 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="User not found")
 
     return create_tokens_for_user(result)
+
+@router.get("/me", response_model=UserOut)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
