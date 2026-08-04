@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.core.security import decode_token
 from app.models.user import User
 
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
