@@ -8,4 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
 
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "cachette-files-459653582452"
+
 settings = Settings()
