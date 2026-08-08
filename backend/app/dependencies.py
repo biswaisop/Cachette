@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.core.security import decode_token
 from app.models.user import User
-from app.service.s3_service import s3_service
+from app.service.s3_service import S3Service
 
 security_scheme = HTTPBearer(auto_error=False)
 
@@ -38,5 +38,5 @@ async def get_current_user(
 
     return user
 
-def get_s3_service() -> S3_Service:
-    return S3_Service()
+def get_s3_service() -> S3Service:
+    return S3Service()
