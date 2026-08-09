@@ -4,6 +4,7 @@ from sqlalchemy import text
 from fastapi import FastAPI
 
 from app.db import engine
+from app.core.redis_client import RedisClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,6 +28,12 @@ async def lifespan(app: FastAPI):
 
     await engine.dispose()
     log.info("Shutdown complete: DB engine disposed.")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await RedisClient.connect()      # or await RedisClient.connect() if it's async
+    yield
+    await RedisClient.disconnect()
 
 
 app = FastAPI(title="Cachette API", version="0.1.0", lifespan=lifespan)
