@@ -17,6 +17,7 @@ class UserOut(BaseModel):
     id: UUID
     email: EmailStr
     created_at: datetime
+    storage_used: int
 
 class TokenResponse(BaseModel):
     access_token: str
