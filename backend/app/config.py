@@ -8,6 +8,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
 
+    REDIS_URL: str
+    AUTH_BUCKET_CAPACITY: int = 5
+    AUTH_BUCKET_REFILL_RATE:float = 1 / 60
+    GENERAL_BUCKET_CAPACITY: int = 40
+    GENERAL_BUCKET_REFILL_RATE:float = 1 / 2
+
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "cachette-files-459653582452"
 

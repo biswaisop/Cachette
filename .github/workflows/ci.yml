@@ -24,7 +24,16 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
-
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +51,8 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/test_filestorage
           SECRET_KEY: ci-test-secret-key
+          REDIS_URL: redis://localhost:6379
+
 
       - name: Run tests
         working-directory: ./backend
@@ -49,6 +60,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/test_filestorage
           SECRET_KEY: ci-test-secret-key
+          REDIS_URL: redis://localhost:6379
 
   build-and-push:
     needs: test-backend

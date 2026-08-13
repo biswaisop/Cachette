@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
@@ -11,5 +11,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    storage_used = Column(BigInteger, nullable=False, default=5 * 1024**3, server_default=str(5 * 1024**3))
+    
 
     files = relationship("File", back_populates="owner")

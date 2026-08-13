@@ -153,5 +153,31 @@ class S3Service:
                 return False
             raise RuntimeError(f"Failed to check object existence: {e}") from e
 
+    # ------------------------------------------------------------------
+    # Update the object
+    # ------------------------------------------------------------------
+
+    async def generate_put_url(
+        self,
+        *,
+        key: str,
+        content_type: str,
+        expires_in: int = 3600,
+    ) -> str:
+        try:
+            async with self._client() as client:
+                return await client.generate_presigned_url(
+                    "put_object",
+                Params = {
+                    "Bucket": self.bucket,
+                    "Key": key,
+                    "ContentType": content_type,
+                },
+                ExpiresIn = expires_in,
+            )
+        except ClientError as e:
+            raise RuntimeError(f"Failed to generate put URL: {e}") from e
+
+
 
 s3_service = S3Service()
