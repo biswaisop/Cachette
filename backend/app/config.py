@@ -17,4 +17,7 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "cachette-files-459653582452"
 
+    MULTIPART_THRESHOLD: int = 5 * 1024 * 1024 #5MB
+    MAX_FILE_SIZE: int = 50 * 1024 * 1024 * 1024 #50GB
+
 settings = Settings()
