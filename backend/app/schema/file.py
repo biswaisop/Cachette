@@ -14,4 +14,9 @@ class UploadInitiateResponse(BaseModel):
     put_url: Optional[str] = None #if single
     upload_id: Optional[str] = None #if multipart
 
+class CompletePart(BaseModel):
+    part_number: int
+    etag: int
 
+class CompleteUpload(BaseModel):
+    parts: list[CompletePart]
