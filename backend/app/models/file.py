@@ -14,6 +14,7 @@ class File(Base):
     size = Column(Integer)
     content_type = Column(String(100))
     status = Column(String(20), default="pending")
+    upload_id = Column(String(255), nullable=True)
     folder_id = Column(UUID(as_uuid=True), ForeignKey("folders.id"), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 

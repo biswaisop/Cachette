@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     DATABASE_URL: str = "postgresql+asyncpg://dev:dev@localhost:5432/filestorage"
     SECRET_KEY: str
@@ -16,5 +16,8 @@ class Settings(BaseSettings):
 
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "cachette-files-459653582452"
+
+    MULTIPART_THRESHOLD: int = 5 * 1024 * 1024 #5MB
+    MAX_FILE_SIZE: int = 50 * 1024 * 1024 * 1024 #50GB
 
 settings = Settings()
