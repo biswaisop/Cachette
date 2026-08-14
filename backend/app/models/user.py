@@ -15,7 +15,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    storage_used = Column(BigInteger, nullable=False, default=5 * 1024**3, server_default=str(5 * 1024**3))
+    storage_used = Column(BigInteger, nullable=False, default=0, server_default="0")
     storage_quota_bytes = Column(
         BigInteger,
         nullable=False,

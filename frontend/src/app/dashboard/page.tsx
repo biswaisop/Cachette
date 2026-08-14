@@ -1,157 +1,443 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { SiteHeader } from "@/components/site-header";
+'use client';
 
-const folders = [
-  { name: "Projects", updated: "2 min ago", items: "12 items" },
-  { name: "Contracts", updated: "1 hour ago", items: "4 items" },
-  { name: "Media", updated: "Today", items: "9 items" },
-];
-
-const files = [
-  { name: "brand-guidelines.pdf", type: "PDF", size: "4.2 MB" },
-  { name: "launch-teaser.mp4", type: "Video", size: "128 MB" },
-  { name: "onboarding.docx", type: "DOCX", size: "1.1 MB" },
-];
-
-const shares = [
-  { name: "Shared with Design Team", access: "Can view" },
-  { name: "Public link: launch reel", access: "Expires in 3 days" },
-  { name: "Finance folder", access: "Restricted" },
-];
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'motion/react';
+import { useAuth } from '@/lib/auth-context';
+import { apiListDirectory, apiDeleteFile, apiCreateFolder, type FileOut, type FolderOut } from '@/lib/api';
+import Sidebar from '@/components/dashboard/sidebar';
+import Breadcrumb, { type BreadcrumbItem } from '@/components/dashboard/breadcrumb';
+import FileGrid from '@/components/dashboard/file-grid';
+import UploadButton from '@/components/dashboard/upload-button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { RiSearchLine, RiFolderAddLine } from 'react-icons/ri';
 
 export default function DashboardPage() {
-  return (
-    <div className="min-h-screen bg-[#f5f5f3] text-black">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-8">
-        <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.28em] text-neutral-500">Dashboard</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">Files, folders, uploads, and shares.</h1>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline">New folder</Button>
-            <Button>Upload files</Button>
-          </div>
-        </div>
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                ["Storage used", "248 GB"],
-                ["Shared links", "18"],
-                ["Uploads today", "06"],
-              ].map(([label, value]) => (
-                <Card key={label} className="soft-reveal">
-                  <CardContent className="p-5">
-                    <div className="text-sm text-neutral-500">{label}</div>
-                    <div className="mt-2 text-3xl font-semibold">{value}</div>
-                  </CardContent>
-                </Card>
-              ))}
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [folders, setFolders] = useState<FolderOut[]>([]);
+  const [files, setFiles] = useState<FileOut[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Delete file confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Delete folder confirmation
+  const [deleteFolderDialogOpen, setDeleteFolderDialogOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+  const [deletingFolder, setDeletingFolder] = useState(false);
+
+  // Rename state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameType, setRenameType] = useState<'file' | 'folder' | null>(null);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+
+  // New folder state
+  const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [folderError, setFolderError] = useState<string | null>(null);
+
+  const handleCreateFolder = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!newFolderName.trim()) return;
+    setCreatingFolder(true);
+    setFolderError(null);
+    try {
+      await apiCreateFolder(newFolderName.trim(), currentFolderId);
+      setNewFolderDialogOpen(false);
+      setNewFolderName('');
+      loadDirectory(currentFolderId);
+    } catch (err: any) {
+      console.error('Failed to create folder:', err);
+      // Assuming fetchApi throws with { detail: "error message" }
+      setFolderError(err.detail || 'Failed to create folder');
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
+
+  const loadDirectory = useCallback(async (folderId: string | null) => {
+    setIsLoading(true);
+    try {
+      const listing = await apiListDirectory(folderId);
+      setFolders(listing.folders);
+      setFiles(listing.files);
+
+      // Update current folder state
+      setCurrentFolderId(folderId);
+
+      // Update breadcrumbs
+      if (folderId === null) {
+        setBreadcrumbs([]);
+      } else if (listing.folder) {
+        setBreadcrumbs((prev) => {
+          // Check if we're going back
+          const existingIdx = prev.findIndex((b) => b.id === folderId);
+          if (existingIdx >= 0) {
+            return prev.slice(0, existingIdx + 1);
+          }
+          // Going deeper
+          return [...prev, { id: listing.folder!.id, name: listing.folder!.name }];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load directory:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Auth guard
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Load root directory
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadDirectory(null);
+    }
+  }, [isAuthenticated, loadDirectory]);
+
+  const handleFolderClick = (folderId: string) => {
+    loadDirectory(folderId);
+  };
+
+  const handleBreadcrumbNavigate = (folderId: string | null) => {
+    loadDirectory(folderId);
+  };
+
+  const handleDeleteFile = (fileId: string) => {
+    setFileToDelete(fileId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!fileToDelete) return;
+    setDeleting(true);
+    try {
+      await apiDeleteFile(fileToDelete);
+      loadDirectory(currentFolderId);
+    } catch (err) {
+      console.error('Delete failed:', err);
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setFileToDelete(null);
+    }
+  };
+
+  const handleDeleteFolderClick = (folderId: string) => {
+    setFolderToDelete(folderId);
+    setDeleteFolderDialogOpen(true);
+  };
+
+  const confirmDeleteFolder = async () => {
+    if (!folderToDelete) return;
+    setDeletingFolder(true);
+    try {
+      const { apiDeleteFolder } = await import('@/lib/api');
+      await apiDeleteFolder(folderToDelete);
+      loadDirectory(currentFolderId);
+    } catch (err) {
+      console.error('Folder delete failed:', err);
+    } finally {
+      setDeletingFolder(false);
+      setDeleteFolderDialogOpen(false);
+      setFolderToDelete(null);
+    }
+  };
+
+  const handleRenameFileClick = (fileId: string, currentName: string) => {
+    setRenameType('file');
+    setRenameTargetId(fileId);
+    setRenameName(currentName);
+    setRenameError(null);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameFolderClick = (folderId: string, currentName: string) => {
+    setRenameType('folder');
+    setRenameTargetId(folderId);
+    setRenameName(currentName);
+    setRenameError(null);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!renameTargetId || !renameType || !renameName.trim()) return;
+    setRenaming(true);
+    setRenameError(null);
+    try {
+      const { apiRenameFile, apiRenameFolder } = await import('@/lib/api');
+      if (renameType === 'file') {
+        await apiRenameFile(renameTargetId, renameName.trim());
+      } else {
+        await apiRenameFolder(renameTargetId, renameName.trim());
+      }
+      setRenameDialogOpen(false);
+      loadDirectory(currentFolderId);
+    } catch (err: any) {
+      console.error('Rename failed:', err);
+      setRenameError(err.detail || 'Failed to rename item');
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const handleDownloadFile = async (fileId: string) => {
+    try {
+      const { apiGetDownloadUrl } = await import('@/lib/api');
+      const { url } = await apiGetDownloadUrl(fileId);
+      // create a temporary link to start download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('Failed to start download');
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
+  return (
+    <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
+      <Sidebar activeItem="files" />
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <motion.header
+          className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] shrink-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Breadcrumb items={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
+
+          <div className="flex items-center gap-3">
+            {/* Search (visual only for now) */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] w-56">
+              <RiSearchLine className="w-3.5 h-3.5 text-white/25" />
+              <input
+                type="text"
+                placeholder="Search files..."
+                className="bg-transparent text-white/60 placeholder:text-white/20 text-[13px] outline-none w-full"
+              />
             </div>
 
-            <Card className="soft-reveal">
-              <CardHeader>
-                <CardTitle>Folder browser</CardTitle>
-                <CardDescription>Ready for folder navigation and nested file listing APIs.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {folders.map((folder) => (
-                  <div key={folder.name} className="flex items-center justify-between rounded-2xl border border-black/10 bg-white px-4 py-4">
-                    <div>
-                      <div className="font-medium">{folder.name}</div>
-                      <div className="text-sm text-neutral-500">{folder.items}</div>
-                    </div>
-                    <div className="text-right text-sm text-neutral-500">{folder.updated}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="soft-reveal">
-              <CardHeader>
-                <CardTitle>Recent files</CardTitle>
-                <CardDescription>File rows that can later be wired to real upload and download actions.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {files.map((file) => (
-                  <div key={file.name} className="flex items-center justify-between rounded-2xl border border-black/10 bg-white px-4 py-4">
-                    <div>
-                      <div className="font-medium">{file.name}</div>
-                      <div className="text-sm text-neutral-500">{file.type}</div>
-                    </div>
-                    <div className="text-sm text-neutral-500">{file.size}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <Button
+              onClick={() => setNewFolderDialogOpen(true)}
+              className="bg-white/[0.05] text-white hover:bg-white/[0.1] h-9 px-4 rounded-lg text-[13px] font-semibold gap-2 border border-white/[0.05]"
+            >
+              <RiFolderAddLine className="w-4 h-4" />
+              New Folder
+            </Button>
+            <UploadButton
+              currentFolderId={currentFolderId}
+              onUploadComplete={() => loadDirectory(currentFolderId)}
+            />
           </div>
+        </motion.header>
 
-          <div className="space-y-6">
-            <Card className="soft-reveal">
-              <CardHeader>
-                <CardTitle>Upload section</CardTitle>
-                <CardDescription>Basic fields for a future file uploader.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-3xl border border-dashed border-black/15 bg-black/[0.02] px-5 py-10 text-center text-sm text-neutral-600">Drop files here or choose a file to upload</div>
-                <div className="space-y-2">
-                  <Label htmlFor="folder">Assign to folder</Label>
-                  <Input id="folder" placeholder="Projects / Q3" />
-                </div>
-                <Button className="w-full">Upload selected file</Button>
-              </CardContent>
-            </Card>
+        {/* Files area */}
+        <motion.div
+          className="flex-1 overflow-auto px-6 py-5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <FileGrid
+            folders={folders}
+            files={files}
+            onFolderClick={handleFolderClick}
+            onDeleteFile={handleDeleteFile}
+            onDeleteFolder={handleDeleteFolderClick}
+            onDownloadFile={handleDownloadFile}
+            onRenameFile={handleRenameFileClick}
+            onRenameFolder={handleRenameFolderClick}
+            isLoading={isLoading}
+          />
+        </motion.div>
+      </div>
 
-            <Card className="soft-reveal">
-              <CardHeader>
-                <CardTitle>Sharing section</CardTitle>
-                <CardDescription>Built to support both user sharing and link sharing.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {shares.map((share) => (
-                  <div key={share.name} className="rounded-2xl border border-black/10 bg-white px-4 py-4">
-                    <div className="font-medium">{share.name}</div>
-                    <div className="text-sm text-neutral-500">{share.access}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white text-[15px]">Delete File</DialogTitle>
+            <DialogDescription className="text-white/40 text-[13px]">
+              This action cannot be undone. The file will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="border-white/[0.08] text-white/50 hover:text-white text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border-0 text-[13px]"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <Card className="soft-reveal">
-              <CardHeader>
-                <CardTitle>Preview workspace</CardTitle>
-                <CardDescription>Dedicated slots for PDF, DOCX, and video viewer components.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-3xl border border-black/10 bg-white px-4 py-5">PDF preview area</div>
-                <div className="rounded-3xl border border-black/10 bg-white px-4 py-5">DOCX viewer area</div>
-                <div className="rounded-3xl border border-black/10 bg-white px-4 py-5">Video player area</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      {/* New Folder dialog */}
+      <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+          <form onSubmit={handleCreateFolder}>
+            <DialogHeader>
+              <DialogTitle className="text-white text-[15px]">New Folder</DialogTitle>
+              <DialogDescription className="text-white/40 text-[13px]">
+                Create a new folder in the current directory.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <input
+                type="text"
+                autoFocus
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Folder name"
+                className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50"
+              />
+              {folderError && (
+                <p className="text-red-400 text-[12px] mt-2">{folderError}</p>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setNewFolderDialogOpen(false)}
+                className="border-white/[0.08] text-white/50 hover:text-white text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={creatingFolder || !newFolderName.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 text-[13px]"
+              >
+                {creatingFolder ? 'Creating...' : 'Create'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-        <Separator className="my-12" />
+      {/* Delete folder confirmation dialog */}
+      <Dialog open={deleteFolderDialogOpen} onOpenChange={setDeleteFolderDialogOpen}>
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white text-[15px]">Delete Folder</DialogTitle>
+            <DialogDescription className="text-white/40 text-[13px]">
+              This action cannot be undone. The folder and all its contents will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteFolderDialogOpen(false)}
+              className="border-white/[0.08] text-white/50 hover:text-white text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDeleteFolder}
+              disabled={deletingFolder}
+              className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border-0 text-[13px]"
+            >
+              {deletingFolder ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <Card className="soft-reveal">
-          <CardHeader>
-            <CardTitle>Future API hooks</CardTitle>
-            <CardDescription>This layout is intentionally basic so backend endpoints can attach without a redesign.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm text-neutral-600 md:grid-cols-3">
-            <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">GET files and folders</div>
-            <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">POST uploads and share links</div>
-            <div className="rounded-2xl border border-black/10 bg-white px-4 py-4">GET previews and permissions</div>
-          </CardContent>
-        </Card>
-      </main>
+      {/* Rename dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+          <form onSubmit={handleRenameSubmit}>
+            <DialogHeader>
+              <DialogTitle className="text-white text-[15px]">
+                Rename {renameType === 'file' ? 'File' : 'Folder'}
+              </DialogTitle>
+              <DialogDescription className="text-white/40 text-[13px] hidden">
+                Enter a new name for the item.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="my-4">
+              <input
+                type="text"
+                autoFocus
+                value={renameName}
+                onChange={(e) => setRenameName(e.target.value)}
+                placeholder="New name"
+                className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50"
+              />
+              {renameError && (
+                <p className="text-red-400 text-[12px] mt-2">{renameError}</p>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRenameDialogOpen(false)}
+                className="border-white/[0.08] text-white/50 hover:text-white text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={renaming || !renameName.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 text-[13px]"
+              >
+                {renaming ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
