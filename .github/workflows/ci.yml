@@ -61,6 +61,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/test_filestorage
           SECRET_KEY: ci-test-secret-key
           REDIS_URL: redis://localhost:6379
+          RESEND_API_KEY: re_test_dummy_key
 
   build-and-push:
     needs: test-backend
