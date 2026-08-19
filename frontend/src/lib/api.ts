@@ -132,6 +132,24 @@ export async function apiGetMe(): Promise<UserOut> {
   return fetchApi<UserOut>('/api/v1/auth/me');
 }
 
+export async function apiForgotPassword(email: string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>('/api/v1/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function apiResetPassword(
+  email: string,
+  otp: string,
+  newPassword: string,
+): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>('/api/v1/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp, new_password: newPassword }),
+  });
+}
+
 // ─── Files API ───────────────────────────────────────────────────
 
 export async function apiListDirectory(folderId?: string | null): Promise<DirectoryListing> {
