@@ -143,7 +143,7 @@ jobs:
           script: |
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 459653582452.dkr.ecr.us-east-1.amazonaws.com
             cd ~/cachette
+            docker system prune -af --volumes --filter "until=24h"
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker compose -f docker-compose.prod.yml exec -T api alembic upgrade head
-            docker image prune -f
