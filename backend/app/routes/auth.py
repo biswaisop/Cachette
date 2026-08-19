@@ -30,9 +30,10 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     user_id = UUID(payload["sub"])
+    token_ver = payload.get("ver")
     result = await db.get(User, user_id)
-    if not result:
-        raise HTTPException(status_code=401, detail="User not found")
+    if not result or token_ver != result.token_version:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     return create_tokens_for_user(result)
 

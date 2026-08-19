@@ -22,6 +22,7 @@ class User(Base):
         default=DEFAULT_STORAGE_QUOTA_BYTES,
         server_default=str(DEFAULT_STORAGE_QUOTA_BYTES),
     )
-    
+    token_version = Column(Integer, nullable=False, default=1, server_default="1")
 
+    
     files = relationship("File", back_populates="owner")
