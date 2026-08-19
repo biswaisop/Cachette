@@ -4,3 +4,5 @@
 *.py[cod]
 .ipynb
 workdone.md
+.pem
+cachette-key.pem

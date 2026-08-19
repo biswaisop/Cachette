@@ -151,9 +151,17 @@ export default function AuthPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="login-password" className="text-white/50 text-[13px]">
-                  Password
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="login-password" className="text-white/50 text-[13px]">
+                    Password
+                  </Label>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-white/30 hover:text-white/60 text-[12px] transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input
                   id="login-password"
                   type="password"

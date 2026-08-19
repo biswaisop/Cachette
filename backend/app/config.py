@@ -20,4 +20,7 @@ class Settings(BaseSettings):
     MULTIPART_THRESHOLD: int = 5 * 1024 * 1024 #5MB
     MAX_FILE_SIZE: int = 50 * 1024 * 1024 * 1024 #50GB
 
+    RESEND_API_KEY: str
+    EMAIL_FROM: str = "noreply@cachette.cloud"
+
 settings = Settings()

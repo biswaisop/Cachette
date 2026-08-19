@@ -17,14 +17,12 @@ class RedisClient:
             )
             logger.info("Redis connected")
 
-    @classmethod 
+    @classmethod
     async def disconnect(cls):
-        if cls._client is None:
-            raise RuntimeError("Redis not connected, call RedisClient.connect() first")
-        await cls._client.aclose()
-        cls._client = None
-        logger.info("Redis disconnected")
-
+        if cls._client is not None:
+            await cls._client.aclose()
+            cls._client = None
+            logger.info("Redis disconnected")
 
     @classmethod
     async def get(cls) -> aioredis.Redis:
@@ -35,8 +33,9 @@ class RedisClient:
     @classmethod
     async def ping(cls) -> bool:
         try:
-            await cls.get().ping()
+            client = await cls.get()
+            await client.ping()
             return True
         except Exception as e:
-            logger.error(f"Redis ping failed {p}")
+            logger.error(f"Redis ping failed: {e}")
             return False

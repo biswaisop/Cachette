@@ -31,11 +31,12 @@ async def get_current_user(
         raise credentials_exception
 
     user_id = payload.get("sub")
+    token_ver = payload.get("ver")
     if user_id is None:
         raise credentials_exception
 
     user = await db.get(User, user_id)
-    if user is None:
+    if user is None or token_ver != user.token_version:
         raise credentials_exception
 
     return user
