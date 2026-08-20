@@ -43,7 +43,7 @@ app = FastAPI(title="Cachette API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://3.82.135.102:3000"],
+    allow_origins=["http://localhost:3000", "http://3.82.135.102:3000", "https://cachette.cloud", "https://www.cachette.cloud"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

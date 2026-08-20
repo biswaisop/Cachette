@@ -138,7 +138,7 @@ function OtpInput({
   };
 
   return (
-    <div className="flex gap-2 justify-center">
+    <div className="flex gap-1.5 sm:gap-2 justify-center">
       {Array.from({ length }).map((_, i) => (
         <motion.div
           key={i}
@@ -155,7 +155,7 @@ function OtpInput({
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            className="w-11 h-13 text-center text-lg font-semibold rounded-lg
+            className="w-10 sm:w-11 h-12 sm:h-13 text-center text-base sm:text-lg font-semibold rounded-lg
               bg-white/[0.04] border border-white/[0.08] text-white
               focus:border-white/30 focus:bg-white/[0.06]
               outline-none transition-all duration-200
@@ -285,10 +285,10 @@ export default function ForgotPasswordPage() {
   const currentIndex = stepOrder.indexOf(step);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#0a0a0a] flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-12 relative overflow-hidden">
       {/* Ambient colored glows */}
       <motion.div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/[0.06] blur-[150px] pointer-events-none"
+        className="absolute top-[-20%] right-[-10%] w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] rounded-full bg-indigo-500/[0.06] blur-[100px] sm:blur-[150px] pointer-events-none"
         animate={{
           x: [0, 30, 0],
           y: [0, -20, 0],
@@ -296,7 +296,7 @@ export default function ForgotPasswordPage() {
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-500/[0.04] blur-[130px] pointer-events-none"
+        className="absolute bottom-[-15%] left-[-10%] w-[280px] sm:w-[500px] h-[280px] sm:h-[500px] rounded-full bg-cyan-500/[0.04] blur-[90px] sm:blur-[130px] pointer-events-none"
         animate={{
           x: [0, -20, 0],
           y: [0, 25, 0],
@@ -304,7 +304,7 @@ export default function ForgotPasswordPage() {
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute top-[30%] left-[20%] w-[350px] h-[350px] rounded-full bg-violet-600/[0.04] blur-[120px] pointer-events-none"
+        className="absolute top-[30%] left-[20%] w-[200px] sm:w-[350px] h-[200px] sm:h-[350px] rounded-full bg-violet-600/[0.04] blur-[80px] sm:blur-[120px] pointer-events-none"
         animate={{
           scale: [1, 1.1, 1],
           opacity: [0.04, 0.06, 0.04],
@@ -316,14 +316,14 @@ export default function ForgotPasswordPage() {
 
       {/* Back link */}
       <motion.div
-        className="absolute top-6 left-6 md:top-8 md:left-10"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-10"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
         <Link
           href="/auth"
-          className="flex items-center gap-2 text-white/40 hover:text-white/70 text-[13px] font-medium transition-colors"
+          className="flex items-center gap-1.5 sm:gap-2 text-white/40 hover:text-white/70 text-[12px] sm:text-[13px] font-medium transition-colors"
         >
           <RiArrowLeftLine className="w-4 h-4" />
           Back to login
@@ -331,15 +331,15 @@ export default function ForgotPasswordPage() {
       </motion.div>
 
       <motion.div
-        className="w-full max-w-sm relative z-10"
+        className="w-full max-w-sm relative z-10 my-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-6">
-          <LogoIcon className="size-8 text-white" />
-          <span className="text-white text-xl font-semibold tracking-tight">Cachette</span>
+          <LogoIcon className="size-7 sm:size-8 text-white" />
+          <span className="text-white text-lg sm:text-xl font-semibold tracking-tight">Cachette</span>
         </div>
 
         <StepIndicator currentStep={step} />

@@ -71,21 +71,22 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#0a0a0a] flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-12 relative overflow-hidden">
       {/* Ambient colored glows */}
-      <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/[0.06] blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-500/[0.04] blur-[130px] pointer-events-none" />
-      <div className="absolute top-[30%] left-[20%] w-[350px] h-[350px] rounded-full bg-violet-600/[0.04] blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-20%] right-[-10%] w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] rounded-full bg-indigo-500/[0.06] blur-[100px] sm:blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-10%] w-[280px] sm:w-[500px] h-[280px] sm:h-[500px] rounded-full bg-cyan-500/[0.04] blur-[90px] sm:blur-[130px] pointer-events-none" />
+      <div className="absolute top-[30%] left-[20%] w-[200px] sm:w-[350px] h-[200px] sm:h-[350px] rounded-full bg-violet-600/[0.04] blur-[80px] sm:blur-[120px] pointer-events-none" />
+
       {/* Back link */}
       <motion.div
-        className="absolute top-6 left-6 md:top-8 md:left-10"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-10"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
         <Link
           href="/"
-          className="flex items-center gap-2 text-white/40 hover:text-white/70 text-[13px] font-medium transition-colors"
+          className="flex items-center gap-1.5 sm:gap-2 text-white/40 hover:text-white/70 text-[12px] sm:text-[13px] font-medium transition-colors"
         >
           <RiArrowLeftLine className="w-4 h-4" />
           Back
@@ -93,19 +94,19 @@ export default function AuthPage() {
       </motion.div>
 
       <motion.div
-        className="w-full max-w-sm relative z-10"
+        className="w-full max-w-sm relative z-10 my-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-10">
-          <LogoIcon className="size-8 text-white" />
-          <span className="text-white text-xl font-semibold tracking-tight">Cachette</span>
+        <div className="flex items-center justify-center gap-2.5 mb-8 sm:mb-10">
+          <LogoIcon className="size-7 sm:size-8 text-white" />
+          <span className="text-white text-lg sm:text-xl font-semibold tracking-tight">Cachette</span>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg p-1 mb-8">
+          <TabsList className="w-full bg-white/[0.04] border border-white/[0.06] rounded-lg p-1 mb-6 sm:mb-8">
             <TabsTrigger
               value="login"
               className="flex-1 text-[13px] font-medium rounded-md data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/40 transition-all"
@@ -123,7 +124,7 @@ export default function AuthPage() {
           {/* Error message */}
           {error && (
             <motion.div
-              className="mb-6 px-4 py-3 rounded-lg border border-red-500/20 bg-red-500/[0.06] text-red-400 text-[13px]"
+              className="mb-5 sm:mb-6 px-4 py-3 rounded-lg border border-red-500/20 bg-red-500/[0.06] text-red-400 text-[13px]"
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -134,8 +135,8 @@ export default function AuthPage() {
 
           {/* Login Tab */}
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
+            <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="login-email" className="text-white/50 text-[13px]">
                   Email
                 </Label>
@@ -150,7 +151,7 @@ export default function AuthPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="login-password" className="text-white/50 text-[13px]">
                     Password
@@ -176,7 +177,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-lg font-semibold text-[14px]"
+                className="w-full h-11 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-lg font-semibold text-[14px] mt-2"
               >
                 {loading ? (
                   <RiLoader4Line className="w-4 h-4 animate-spin" />
@@ -189,8 +190,8 @@ export default function AuthPage() {
 
           {/* Signup Tab */}
           <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-5">
-              <div className="space-y-2">
+            <form onSubmit={handleSignup} className="space-y-4 sm:space-y-5">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="signup-email" className="text-white/50 text-[13px]">
                   Email
                 </Label>
@@ -205,7 +206,7 @@ export default function AuthPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="signup-password" className="text-white/50 text-[13px]">
                   Password
                 </Label>
@@ -220,7 +221,7 @@ export default function AuthPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="signup-confirm" className="text-white/50 text-[13px]">
                   Confirm Password
                 </Label>
@@ -238,7 +239,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-lg font-semibold text-[14px]"
+                className="w-full h-11 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-lg font-semibold text-[14px] mt-2"
               >
                 {loading ? (
                   <RiLoader4Line className="w-4 h-4 animate-spin" />
@@ -251,7 +252,7 @@ export default function AuthPage() {
         </Tabs>
 
         {/* Footer text */}
-        <p className="text-white/20 text-[12px] text-center mt-8">
+        <p className="text-white/20 text-[11px] sm:text-[12px] text-center mt-6 sm:mt-8">
           By continuing, you agree to our Terms and Privacy Policy.
         </p>
       </motion.div>
