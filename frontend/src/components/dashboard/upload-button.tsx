@@ -78,17 +78,17 @@ export default function UploadButton({ currentFolderId, onUploadComplete }: Uplo
       <Button
         onClick={handleClick}
         disabled={uploading}
-        className="bg-white text-[#0a0a0a] hover:bg-white/90 h-9 px-4 rounded-lg text-[13px] font-semibold gap-2"
+        className="bg-white text-[#0a0a0a] hover:bg-white/90 h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[12px] sm:text-[13px] font-semibold gap-1.5 sm:gap-2 shrink-0"
       >
         {uploading ? (
           <>
-            <RiLoader4Line className="w-4 h-4 animate-spin" />
-            <span className="max-w-[120px] truncate">{uploadProgress}</span>
+            <RiLoader4Line className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+            <span className="max-w-[80px] sm:max-w-[120px] truncate">{uploadProgress}</span>
           </>
         ) : (
           <>
-            <RiUploadCloud2Line className="w-4 h-4" />
-            Upload
+            <RiUploadCloud2Line className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Upload</span>
           </>
         )}
       </Button>

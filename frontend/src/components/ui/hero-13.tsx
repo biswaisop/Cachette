@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
-import { motion, useMotionValue, useMotionTemplate } from 'motion/react';
+import React, { useState } from 'react';
+import { ChevronDown, Menu, X } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'motion/react';
 import LogoIcon from '@/assets/logo-icon';
 import Link from 'next/link';
 
@@ -47,6 +47,7 @@ export default function Hero({
     secondaryCtaHref = '#features',
     achievementText = 'Up to 5 GB free — no credit card required',
 }: HeroProps) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const line1Words = headingLine1.split(' ');
     const line2Words = headingLine2.split(' ');
@@ -62,7 +63,7 @@ export default function Hero({
 
     return (
         <section 
-            className="relative w-full h-screen min-h-[700px] overflow-hidden bg-[#0a0a0a] group"
+            className="relative w-full min-h-[100dvh] flex flex-col justify-between overflow-hidden bg-[#0a0a0a] group"
             onMouseMove={handleMouseMove}
         >
             {/* ─── Background visual layer ─── */}
@@ -78,25 +79,25 @@ export default function Hero({
 
             {/* Colored ambient glow orbs — solid fills + heavy blur for atmosphere */}
             <motion.div
-                className="absolute top-[-20%] right-[-5%] w-[700px] h-[700px] rounded-full bg-indigo-500/[0.08] blur-[150px] pointer-events-none"
+                className="absolute top-[-20%] right-[-5%] w-[350px] sm:w-[500px] md:w-[700px] h-[350px] sm:h-[500px] md:h-[700px] rounded-full bg-indigo-500/[0.08] blur-[100px] sm:blur-[150px] pointer-events-none"
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 3, ease: 'easeOut' }}
             />
             <motion.div
-                className="absolute top-[10%] right-[15%] w-[400px] h-[400px] rounded-full bg-violet-600/[0.06] blur-[120px] pointer-events-none"
+                className="absolute top-[10%] right-[15%] w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] rounded-full bg-violet-600/[0.06] blur-[90px] sm:blur-[120px] pointer-events-none"
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 2.5, delay: 0.2, ease: 'easeOut' }}
             />
             <motion.div
-                className="absolute bottom-[-15%] left-[-8%] w-[600px] h-[600px] rounded-full bg-cyan-500/[0.06] blur-[130px] pointer-events-none"
+                className="absolute bottom-[-15%] left-[-8%] w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] rounded-full bg-cyan-500/[0.06] blur-[100px] sm:blur-[130px] pointer-events-none"
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 3, delay: 0.4, ease: 'easeOut' }}
             />
             <motion.div
-                className="absolute bottom-[10%] right-[25%] w-[350px] h-[350px] rounded-full bg-blue-600/[0.05] blur-[100px] pointer-events-none"
+                className="absolute bottom-[10%] right-[25%] w-[200px] sm:w-[350px] h-[200px] sm:h-[350px] rounded-full bg-blue-600/[0.05] blur-[80px] sm:blur-[100px] pointer-events-none"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 2.5, delay: 0.7 }}
@@ -134,7 +135,7 @@ export default function Hero({
 
             {/* Mouse-tracking spotlight */}
             <motion.div
-                className="pointer-events-none absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                className="pointer-events-none absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 hidden sm:block"
                 style={{
                     background: useMotionTemplate`
                         radial-gradient(
@@ -147,18 +148,18 @@ export default function Hero({
             />
 
             {/* Content Layer */}
-            <div className="relative z-10 flex flex-col h-full w-full">
+            <div className="relative z-10 flex flex-col justify-between min-h-[100dvh] w-full">
 
                 {/* ─── Navbar ─── */}
                 <motion.nav
-                    className="w-full px-6 md:px-10 lg:px-16 py-5 md:py-7 flex items-center justify-between"
+                    className="w-full px-4 sm:px-6 md:px-10 lg:px-16 py-4 sm:py-5 md:py-7 flex items-center justify-between"
                     initial={{ opacity: 0, y: -24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.15, ease: 'easeOut' }}
                 >
                     <Link href="/" className="flex items-center gap-2.5 shrink-0">
-                       <LogoIcon className='size-7 text-white' />
-                        <span className="text-white text-lg font-semibold tracking-tight">
+                       <LogoIcon className='size-6 sm:size-7 text-white' />
+                        <span className="text-white text-base sm:text-lg font-semibold tracking-tight">
                             {brandName}
                         </span>
                     </Link>
@@ -182,15 +183,16 @@ export default function Hero({
                         ))}
                     </div>
 
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3 sm:gap-5">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.6, delay: 0.6 }}
+                            className="hidden sm:flex items-center"
                         >
                             <Link
                                 href={loginHref}
-                                className="flex items-center gap-2.5 text-white/80 hover:text-white transition-colors text-[14px] font-medium"
+                                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-[13px] sm:text-[14px] font-medium px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03]"
                             >
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
@@ -200,40 +202,106 @@ export default function Hero({
                             </Link>
                         </motion.div>
 
-                        <button className="lg:hidden text-white p-1">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                <line x1="3" y1="7" x2="21" y2="7" />
-                                <line x1="3" y1="12" x2="16" y2="12" />
-                                <line x1="3" y1="17" x2="21" y2="17" />
-                            </svg>
+                        {/* Mobile menu hamburger toggle */}
+                        <button 
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            aria-label="Toggle navigation menu"
+                            className="lg:hidden text-white/80 hover:text-white p-2 rounded-lg bg-white/[0.04] border border-white/[0.08] transition-colors"
+                        >
+                            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                         </button>
                     </div>
                 </motion.nav>
 
+                {/* ─── Mobile Navigation Drawer / Menu ─── */}
+                <AnimatePresence>
+                    {mobileMenuOpen && (
+                        <motion.div
+                            className="fixed inset-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl flex flex-col px-6 py-6 lg:hidden"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                        >
+                            <div className="flex items-center justify-between pb-6 border-b border-white/[0.08]">
+                                <Link 
+                                    href="/" 
+                                    className="flex items-center gap-2.5"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <LogoIcon className="size-6 text-white" />
+                                    <span className="text-white text-lg font-semibold tracking-tight">{brandName}</span>
+                                </Link>
+                                <button
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    aria-label="Close menu"
+                                    className="p-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white/80 hover:text-white"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <nav className="flex flex-col gap-2 py-8 flex-1">
+                                {navLinks.map((link, idx) => (
+                                    <a
+                                        key={idx}
+                                        href={link.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="text-white/80 hover:text-white text-lg font-medium py-3 px-4 rounded-xl hover:bg-white/[0.05] transition-colors"
+                                    >
+                                        {link.label}
+                                    </a>
+                                ))}
+                            </nav>
+
+                            <div className="pt-6 border-t border-white/[0.08] space-y-3">
+                                <Link
+                                    href={loginHref}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-full flex items-center justify-center gap-2.5 text-white/90 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] rounded-full py-3 text-[14px] font-medium transition-colors"
+                                >
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                                    </span>
+                                    {loginLabel}
+                                </Link>
+                                <Link
+                                    href={primaryCtaHref}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-full block text-center bg-white text-[#0a0a0a] rounded-full py-3 text-[14px] font-semibold hover:bg-white/90 transition-colors"
+                                >
+                                    {primaryCtaLabel}
+                                </Link>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* ─── Hero Content ─── */}
-                <div className="flex-1 flex flex-col justify-end px-6 md:px-10 lg:px-16 pb-20 md:pb-28">
+                <div className="flex-1 flex flex-col justify-center lg:justify-end px-4 sm:px-6 md:px-10 lg:px-16 py-10 sm:py-16 md:pb-24 lg:pb-28">
                     <div className="max-w-2xl">
 
                         {/* Badge pill */}
                         <motion.div
-                            className="inline-flex items-center mb-8 md:mb-10"
+                            className="inline-flex items-center mb-6 sm:mb-8 md:mb-10 max-w-full"
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.7, delay: 0.5 }}
                         >
-                            <span className="relative inline-flex items-center px-4 py-1.5 rounded-full text-[12px] md:text-[13px] font-medium text-white/80 border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+                            <span className="relative inline-flex items-center px-3.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-[13px] font-medium text-white/80 border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden truncate">
                                 <span className="absolute inset-0 -translate-x-full animate-[shimmer_3.5s_infinite] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)]" />
-                                <span className="relative">{badgeText}</span>
+                                <span className="relative truncate">{badgeText}</span>
                             </span>
                         </motion.div>
 
                         {/* Heading — word-by-word stagger */}
-                        <h1 className="text-white text-[42px] sm:text-[54px] md:text-[64px] lg:text-[72px] font-light leading-[1.05] tracking-tight mb-6 md:mb-8">
+                        <h1 className="text-white text-[32px] xs:text-[38px] sm:text-[48px] md:text-[60px] lg:text-[72px] font-light leading-[1.08] tracking-tight mb-5 sm:mb-6 md:mb-8">
                             <span className="block overflow-hidden">
                                 {line1Words.map((word, i) => (
                                     <motion.span
                                         key={i}
-                                        className="inline-block mr-[0.3em]"
+                                        className="inline-block mr-[0.25em]"
                                         initial={{ y: '120%', opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{
@@ -250,7 +318,7 @@ export default function Hero({
                                 {line2Words.map((word, i) => (
                                     <motion.span
                                         key={i}
-                                        className="inline-block mr-[0.3em]"
+                                        className="inline-block mr-[0.25em]"
                                         initial={{ y: '120%', opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{
@@ -267,7 +335,7 @@ export default function Hero({
 
                         {/* Animated horizontal rule */}
                         <motion.div
-                            className="h-px bg-white/20 mb-6 md:mb-7 max-w-sm"
+                            className="h-px bg-white/20 mb-5 sm:mb-6 md:mb-7 max-w-[200px] sm:max-w-sm"
                             initial={{ scaleX: 0, originX: 0 }}
                             animate={{ scaleX: 1 }}
                             transition={{ duration: 1.2, delay: 1.25, ease: [0.33, 1, 0.68, 1] }}
@@ -275,7 +343,7 @@ export default function Hero({
 
                         {/* Description */}
                         <motion.p
-                            className="text-white/45 text-sm md:text-[15px] leading-relaxed max-w-md mb-10 md:mb-12"
+                            className="text-white/50 text-sm sm:text-[15px] leading-relaxed max-w-md mb-8 sm:mb-10 md:mb-12"
                             initial={{ opacity: 0, y: 25 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.9, delay: 1.35, ease: 'easeOut' }}
@@ -284,15 +352,16 @@ export default function Hero({
                         </motion.p>
 
                         {/* CTA Buttons */}
-                        <div className="flex items-center gap-4 md:gap-5">
+                        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 sm:gap-4 md:gap-5 w-full sm:w-auto">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.7, delay: 1.55 }}
+                                className="w-full xs:w-auto"
                             >
                                 <Link
                                     href={primaryCtaHref}
-                                    className="relative bg-white text-[#0a0a0a] rounded-full px-7 py-3 text-[14px] font-semibold overflow-hidden group/btn inline-block"
+                                    className="relative block w-full xs:w-auto text-center bg-white text-[#0a0a0a] rounded-full px-6 sm:px-7 py-3 text-[13px] sm:text-[14px] font-semibold overflow-hidden group/btn"
                                 >
                                     <span className="absolute inset-0 bg-[#0a0a0a] translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out rounded-full" />
                                     <span className="relative z-10 group-hover/btn:text-white transition-colors duration-300">
@@ -303,7 +372,7 @@ export default function Hero({
 
                             <motion.a
                                 href={secondaryCtaHref}
-                                className="flex items-center gap-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white rounded-full px-6 py-3 text-[14px] font-medium transition-all duration-300"
+                                className="flex items-center justify-center gap-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white rounded-full px-5 sm:px-6 py-3 text-[13px] sm:text-[14px] font-medium transition-all duration-300 w-full xs:w-auto"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.7, delay: 1.7 }}
@@ -317,7 +386,7 @@ export default function Hero({
                 </div>
 
                 {/* ─── Bottom Bar ─── */}
-                <div className="w-full px-6 md:px-10 lg:px-16 pb-8 md:pb-10 flex items-end justify-between">
+                <div className="w-full px-4 sm:px-6 md:px-10 lg:px-16 pb-6 sm:pb-8 md:pb-10 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-2">
                     <div />
                     <motion.div
                         className="flex items-center gap-3"
@@ -325,7 +394,7 @@ export default function Hero({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, delay: 2 }}
                     >
-                        <p className="text-white/35 text-[13px] font-medium tracking-wide">
+                        <p className="text-white/35 text-[12px] sm:text-[13px] font-medium tracking-wide">
                             {achievementText}
                         </p>
                     </motion.div>

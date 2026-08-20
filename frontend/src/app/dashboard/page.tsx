@@ -18,12 +18,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RiSearchLine, RiFolderAddLine } from 'react-icons/ri';
+import { RiSearchLine, RiFolderAddLine, RiMenuLine } from 'react-icons/ri';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [folders, setFolders] = useState<FolderOut[]>([]);
   const [files, setFiles] = useState<FileOut[]>([]);
@@ -66,7 +67,6 @@ export default function DashboardPage() {
       loadDirectory(currentFolderId);
     } catch (err: any) {
       console.error('Failed to create folder:', err);
-      // Assuming fetchApi throws with { detail: "error message" }
       setFolderError(err.detail || 'Failed to create folder');
     } finally {
       setCreatingFolder(false);
@@ -209,7 +209,6 @@ export default function DashboardPage() {
     try {
       const { apiGetDownloadUrl } = await import('@/lib/api');
       const { url } = await apiGetDownloadUrl(fileId);
-      // create a temporary link to start download
       const a = document.createElement('a');
       a.href = url;
       a.download = '';
@@ -234,22 +233,39 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
-      <Sidebar activeItem="files" />
+      <Sidebar 
+        activeItem="files" 
+        isOpen={mobileSidebarOpen} 
+        onClose={() => setMobileSidebarOpen(false)} 
+      />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <motion.header
-          className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] shrink-0"
+          className="flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4 border-b border-white/[0.04] shrink-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Breadcrumb items={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {/* Hamburger button on mobile */}
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open navigation sidebar"
+              className="md:hidden p-1.5 -ml-1 text-white/60 hover:text-white rounded-lg bg-white/[0.03] border border-white/[0.06] transition-colors shrink-0"
+            >
+              <RiMenuLine className="w-4 h-4" />
+            </button>
 
-          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <Breadcrumb items={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Search (visual only for now) */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] w-56">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] w-48 xl:w-56">
               <RiSearchLine className="w-3.5 h-3.5 text-white/25" />
               <input
                 type="text"
@@ -260,10 +276,10 @@ export default function DashboardPage() {
 
             <Button
               onClick={() => setNewFolderDialogOpen(true)}
-              className="bg-white/[0.05] text-white hover:bg-white/[0.1] h-9 px-4 rounded-lg text-[13px] font-semibold gap-2 border border-white/[0.05]"
+              className="bg-white/[0.05] text-white hover:bg-white/[0.1] h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[12px] sm:text-[13px] font-semibold gap-1.5 sm:gap-2 border border-white/[0.05] shrink-0"
             >
-              <RiFolderAddLine className="w-4 h-4" />
-              New Folder
+              <RiFolderAddLine className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">New Folder</span>
             </Button>
             <UploadButton
               currentFolderId={currentFolderId}
@@ -274,7 +290,7 @@ export default function DashboardPage() {
 
         {/* Files area */}
         <motion.div
-          className="flex-1 overflow-auto px-6 py-5"
+          className="flex-1 overflow-auto px-3 sm:px-6 py-4 sm:py-5"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -295,14 +311,14 @@ export default function DashboardPage() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-[92vw] sm:max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-white text-[15px]">Delete File</DialogTitle>
             <DialogDescription className="text-white/40 text-[13px]">
               This action cannot be undone. The file will be permanently removed.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-0 mt-3">
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
@@ -323,7 +339,7 @@ export default function DashboardPage() {
 
       {/* New Folder dialog */}
       <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
-        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-[92vw] sm:max-w-sm rounded-2xl">
           <form onSubmit={handleCreateFolder}>
             <DialogHeader>
               <DialogTitle className="text-white text-[15px]">New Folder</DialogTitle>
@@ -344,7 +360,7 @@ export default function DashboardPage() {
                 <p className="text-red-400 text-[12px] mt-2">{folderError}</p>
               )}
             </div>
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 sm:gap-0 mt-1">
               <Button
                 type="button"
                 variant="outline"
@@ -367,14 +383,14 @@ export default function DashboardPage() {
 
       {/* Delete folder confirmation dialog */}
       <Dialog open={deleteFolderDialogOpen} onOpenChange={setDeleteFolderDialogOpen}>
-        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-[92vw] sm:max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-white text-[15px]">Delete Folder</DialogTitle>
             <DialogDescription className="text-white/40 text-[13px]">
               This action cannot be undone. The folder and all its contents will be permanently removed.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-0 mt-3">
             <Button
               variant="outline"
               onClick={() => setDeleteFolderDialogOpen(false)}
@@ -395,7 +411,7 @@ export default function DashboardPage() {
 
       {/* Rename dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-sm">
+        <DialogContent className="bg-[#141414] border-white/[0.08] max-w-[92vw] sm:max-w-sm rounded-2xl">
           <form onSubmit={handleRenameSubmit}>
             <DialogHeader>
               <DialogTitle className="text-white text-[15px]">
@@ -418,7 +434,7 @@ export default function DashboardPage() {
                 <p className="text-red-400 text-[12px] mt-2">{renameError}</p>
               )}
             </div>
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 sm:gap-0 mt-1">
               <Button
                 type="button"
                 variant="outline"
