@@ -1,8 +1,39 @@
-.venv
-.env
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# Python / Virtual Environments
+.venv/
+venv/
+ENV/
+env/
 **/__pycache__/
 *.py[cod]
-.ipynb
-workdone.md
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Next.js / Frontend Builds
+.next/
+/out/
+/build/
+/dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environments & Secrets
+.env
+.env*.local
 .pem
 cachette-key.pem
+
+# Temporary & Editor
+.ipynb
+workdone.md
+.DS_Store
+Thumbs.db
+
