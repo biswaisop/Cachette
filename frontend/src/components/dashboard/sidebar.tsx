@@ -9,7 +9,7 @@ import {
   RiFolder3Line,
   RiShareLine,
   RiDeleteBinLine,
-  RiLogoutBoxRLine,
+  RiShieldCheckLine,
   RiCloseLine,
 } from 'react-icons/ri';
 
@@ -19,7 +19,7 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-const STORAGE_QUOTA = 5 * 1024 ** 3; // 5 GB
+const DEFAULT_QUOTA = 5 * 1024 ** 3; // 5 GB fallback
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -29,21 +29,17 @@ function formatBytes(bytes: number): string {
 }
 
 export default function Sidebar({ activeItem = 'files', isOpen = false, onClose }: SidebarProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
+  const quotaBytes = user?.storage_quota_bytes || DEFAULT_QUOTA;
   const storageUsed = user?.storage_used ?? 0;
-  const storagePercent = Math.min((storageUsed / STORAGE_QUOTA) * 100, 100);
+  const storagePercent = Math.min((storageUsed / quotaBytes) * 100, 100);
 
   const navItems = [
     { id: 'files', label: 'My Files', icon: RiFolder3Line, href: '/dashboard' },
     { id: 'shared', label: 'Shared', icon: RiShareLine, href: '/dashboard' },
     { id: 'trash', label: 'Trash', icon: RiDeleteBinLine, href: '/dashboard' },
   ];
-
-  const handleLogout = () => {
-    onClose?.();
-    logout();
-  };
 
   const sidebarContent = (
     <>
@@ -81,31 +77,36 @@ export default function Sidebar({ activeItem = 'files', isOpen = false, onClose 
           </div>
           <Progress value={storagePercent} className="h-1 mb-2.5 bg-white/[0.06] [&>div]:bg-white/60" />
           <p className="text-white/30 text-[11px]">
-            {formatBytes(storageUsed)} of {formatBytes(STORAGE_QUOTA)}
+            {formatBytes(storageUsed)} of {formatBytes(quotaBytes)}
           </p>
         </div>
       </div>
 
-      {/* User section */}
+      {/* Central-issued User section (Read-Only) */}
       <div className="mx-4 sm:mx-5 h-px bg-white/[0.06]" />
       <div className="px-3 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5 sm:gap-3 px-2 min-w-0">
-          <div className="w-7 h-7 rounded-full bg-white/[0.08] flex items-center justify-center shrink-0">
-            <span className="text-white/60 text-[11px] font-semibold uppercase">
-              {user?.email?.charAt(0) || '?'}
+          <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+            <span className="text-indigo-300 text-[11px] font-semibold uppercase">
+              {(user?.display_name || 'N').charAt(0)}
             </span>
           </div>
-          <span className="text-white/50 text-[12px] truncate">
-            {user?.email || 'Loading...'}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-white/80 text-[12px] font-medium truncate">
+              {user?.display_name || 'Node Owner'}
+            </span>
+            <span className="text-white/30 text-[10px] truncate">
+              Paired with Central
+            </span>
+          </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="p-2 text-white/30 hover:text-white/60 transition-colors rounded-lg hover:bg-white/[0.04]"
-          title="Log out"
+        <Link
+          href="/auth"
+          className="p-1.5 text-white/40 hover:text-emerald-400 transition-colors rounded-lg hover:bg-white/[0.04]"
+          title="Node Pairing Status"
         >
-          <RiLogoutBoxRLine className="w-4 h-4" />
-        </button>
+          <RiShieldCheckLine className="w-4 h-4 text-emerald-400/80" />
+        </Link>
       </div>
     </>
   );

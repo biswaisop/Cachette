@@ -8,8 +8,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.dependencies import get_current_user, get_s3_service, rate_limit_user, general_limiter
-from app.models.user import User
+from app.dependencies import get_current_node_user, get_s3_service, rate_limit_user, general_limiter
+from app.models.user import UserCache
 from app.models.file import File
 from app.models.folder import Folder
 from app.schema.file import UploadInitiate, UploadInitiateResponse, CompleteUpload, CompletePart, FileOut, DirectoryListing, FolderOut, FolderCreate, ItemRename, DownloadUrlResponse
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/files", tags = ["files"])
 @router.post("/uploads/initate", response_model = UploadInitiateResponse, dependencies=[Depends(rate_limit_user(general_limiter))])
 async def initiate_upload(
     body: UploadInitiate,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service),
 ):
@@ -77,7 +77,7 @@ async def initiate_upload(
 async def upload_single(
     file_id: uuid.UUID,
     file: UploadFile,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -106,7 +106,7 @@ async def upload_part(
     file_id: uuid.UUID,
     part_number: int,
     part: UploadFile,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -129,7 +129,7 @@ async def upload_part(
 async def get_part_url(
     file_id: uuid.UUID,
     part_number: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -152,7 +152,7 @@ async def get_part_url(
 async def complete_upload(
     file_id: uuid.UUID,
     body: CompleteUpload,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -186,7 +186,7 @@ async def complete_upload(
 @router.post("/upload/{file_id}/abort", dependencies = [Depends(rate_limit_user(general_limiter))])
 async def abort_upload(
     file_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -204,7 +204,7 @@ async def abort_upload(
 @router.delete("/{file_id}", dependencies = [Depends(rate_limit_user(general_limiter))])
 async def delete_file(
     file_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -223,7 +223,7 @@ async def delete_file(
 @router.get("/{file_id}/download", response_model=DownloadUrlResponse, dependencies=[Depends(rate_limit_user(general_limiter))])
 async def get_download_url(
     file_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -247,7 +247,7 @@ async def get_download_url(
 async def rename_file(
     file_id: uuid.UUID,
     body: ItemRename,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
 ):
     file_row = await db.get(File, file_id)
@@ -275,7 +275,7 @@ async def rename_file(
 @router.post("/folders", response_model=FolderOut, dependencies=[Depends(rate_limit_user(general_limiter))])
 async def create_folder(
     body: FolderCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
 ):
     if body.parent_id:
@@ -307,7 +307,7 @@ async def create_folder(
 async def rename_folder(
     folder_id: uuid.UUID,
     body: ItemRename,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
 ):
     folder_row = await db.get(Folder, folder_id)
@@ -334,7 +334,7 @@ async def rename_folder(
 @router.delete("/folders/{folder_id}", dependencies = [Depends(rate_limit_user(general_limiter))])
 async def delete_folder(
     folder_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
     s3: s3_service = Depends(get_s3_service)
 ):
@@ -370,7 +370,7 @@ async def delete_folder(
 @router.get("", response_model=DirectoryListing, dependencies=[Depends(rate_limit_user(general_limiter))])
 async def list_directory(
     folder_id: Optional[uuid.UUID] = Query(None, description="Folder to list; omit for root"),
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
 ):
     folder = None
@@ -403,7 +403,7 @@ async def list_directory(
 @router.get("/{file_id}", response_model=FileOut, dependencies=[Depends(rate_limit_user(general_limiter))])
 async def get_file(
     file_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserCache = Depends(get_current_node_user),
     db: AsyncSession = Depends(get_db),
 ):
     file_row = await db.get(File, file_id)

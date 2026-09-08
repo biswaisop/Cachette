@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -6,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.redis_client import RedisClient
 from app.db import engine
-from app.routes.auth import router as auth_router
 from app.routes.files import router as files_router
+from app.routes.pairing import router as pairing_router
+from app.service.s3_service import s3_service
+from app.service.tunnel_service import ensure_cloudflared_on_startup
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +34,16 @@ async def lifespan(app: FastAPI):
     await RedisClient.connect()
     log.info("Startup complete: Redis connected.")
 
+    log.info("Startup: ensuring S3 bucket exists...")
+    try:
+        await s3_service.ensure_bucket_exists()
+        log.info("Startup complete: S3 bucket ready.")
+    except Exception as e:
+        log.warning(f"Unable to initialize S3 bucket on startup: {e}")
+
+    # Startup resilience: automatically ensure cloudflared is online if paired
+    asyncio.create_task(ensure_cloudflared_on_startup())
+
     yield
 
     await RedisClient.disconnect()
@@ -49,6 +62,7 @@ app.add_middleware(
         "https://cachette.cloud",
         "https://www.cachette.cloud",
     ],
+    allow_origin_regex=r"^https://.*\.cachette\.cloud$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,7 +77,5 @@ async def health_check():
 
 # ----------- API ENDPOINTS ------------ #
 
-app.include_router(auth_router, prefix="/api/v1")
 app.include_router(files_router, prefix="/api/v1")
-
-
+app.include_router(pairing_router, prefix="/api/v1")

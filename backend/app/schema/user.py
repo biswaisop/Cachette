@@ -1,33 +1,16 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
-from datetime import datetime
 from uuid import UUID
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserOut(BaseModel):
+class UserCacheOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
-    email: EmailStr
-    created_at: datetime
+    user_id: UUID
+    display_name: Optional[str] = None
+    storage_quota_bytes: int
     storage_used: int
 
-class TokenResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
 
-class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-class ResetPasswordRequest(BaseModel):
-    email: EmailStr
-    otp: str
-    new_password: str
+# Backward compatibility
+UserOut = UserCacheOut

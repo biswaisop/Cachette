@@ -34,14 +34,18 @@ class Token_Bucket_Rate_Limiter:
         return self._script_sha
 
     async def check(self, identifier: str, cost: int = 1) -> bool:
-        client = await RedisClient.get()
-        sha = await self._get_script(client)
-        now_ms = int(time.time() * 1000)
-        key = f"{self.key_prefix}:{identifier}"
         try:
-            allowed = await client.evalsha(sha, 1, key, self.capacity, self.refill_rate, now_ms, cost)
-        except Exception:
-            self._script_sha = None
+            client = await RedisClient.get()
             sha = await self._get_script(client)
-            allowed = await client.evalsha(sha, 1, key, self.capacity, self.refill_rate, now_ms, cost)
-        return bool(allowed)
+            now_ms = int(time.time() * 1000)
+            key = f"{self.key_prefix}:{identifier}"
+            try:
+                allowed = await client.evalsha(sha, 1, key, self.capacity, self.refill_rate, now_ms, cost)
+            except Exception:
+                self._script_sha = None
+                sha = await self._get_script(client)
+                allowed = await client.evalsha(sha, 1, key, self.capacity, self.refill_rate, now_ms, cost)
+            return bool(allowed)
+        except Exception:
+            # Fail-open: don't block user requests if Redis is unavailable
+            return True

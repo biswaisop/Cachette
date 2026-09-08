@@ -19,7 +19,7 @@ const plans = [
       'Basic sharing',
     ],
     cta: 'Get Started',
-    href: '/auth',
+    href: '/dashboard',
     highlighted: false,
   },
   {
@@ -35,8 +35,8 @@ const plans = [
       'Link expiration controls',
       'Priority support',
     ],
-    cta: 'Start Pro Trial',
-    href: '/auth',
+    cta: 'Connect Node',
+    href: '/dashboard',
     highlighted: true,
   },
 ];

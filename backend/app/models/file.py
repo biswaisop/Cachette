@@ -4,11 +4,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
+
 class File(Base):
     __tablename__ = "files"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("user_cache.user_id"), nullable=False)
     s3_key = Column(String(500), nullable=False)
     filename = Column(String(255), nullable=False)
     size = Column(Integer)
@@ -18,8 +19,7 @@ class File(Base):
     folder_id = Column(UUID(as_uuid=True), ForeignKey("folders.id"), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-
-    owner = relationship("User", back_populates="files")
+    owner = relationship("UserCache", back_populates="files")
     shares = relationship("FileShare", back_populates="file")
     folder = relationship("Folder", back_populates="files")
     share_links = relationship("ShareLink", back_populates="file")

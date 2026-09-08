@@ -44,10 +44,10 @@ export default function CtaSection() {
           transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
         >
           <Link
-            href="/auth"
+            href="/dashboard"
             className="relative w-full sm:w-auto bg-indigo-500 text-white rounded-full px-7 sm:px-8 py-3 sm:py-3.5 text-[13px] sm:text-[14px] font-semibold overflow-hidden group/btn inline-flex items-center justify-center gap-2 hover:bg-indigo-400 transition-colors duration-300"
           >
-            Create Free Account
+            Open Node Dashboard
             <RiArrowRightLine className="w-4 h-4" />
           </Link>
         </motion.div>

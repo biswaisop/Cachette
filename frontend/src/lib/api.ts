@@ -2,26 +2,55 @@
 // proxy all /api/* requests to the FastAPI backend server-side.
 const API_BASE = "";
 
-// ─── Token helpers ───────────────────────────────────────────────
+// ─── Session Token helpers ───────────────────────────────────────
 
-export function getAccessToken(): string | null {
+export function getSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
+  return localStorage.getItem('session_token');
 }
 
-export function getRefreshToken(): string | null {
+export function setSessionToken(token: string, expiresAt?: string | null) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('session_token', token);
+  if (expiresAt) {
+    localStorage.setItem('session_token_expires_at', expiresAt);
+  }
+}
+
+export function getSessionTokenExpiresAt(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refresh_token');
+  return localStorage.getItem('session_token_expires_at');
 }
 
-export function setTokens(access: string, refresh: string) {
-  localStorage.setItem('access_token', access);
-  localStorage.setItem('refresh_token', refresh);
+export function clearSessionToken() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('session_token');
+  localStorage.removeItem('session_token_expires_at');
 }
 
-export function clearTokens() {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+// Backward compatibility with previous token helper names
+export const getAccessToken = getSessionToken;
+export const clearTokens = clearSessionToken;
+
+// ─── Session Expired Event Listener ──────────────────────────────
+type SessionExpiredListener = () => void;
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
+
+export function onSessionExpired(listener: SessionExpiredListener): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => {
+    sessionExpiredListeners.delete(listener);
+  };
+}
+
+function notifySessionExpired() {
+  sessionExpiredListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch (e) {
+      console.error('Error in session expired listener:', e);
+    }
+  });
 }
 
 // ─── Fetch wrapper ───────────────────────────────────────────────
@@ -30,7 +59,7 @@ async function fetchApi<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = getAccessToken();
+  const token = getSessionToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -44,6 +73,11 @@ async function fetchApi<T>(
     ...options,
     headers,
   });
+
+  if (res.status === 401) {
+    notifySessionExpired();
+    throw new ApiError(401, 'Session expired or invalid — please re-pair from central dashboard');
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -65,17 +99,26 @@ export class ApiError extends Error {
 
 // ─── Types ───────────────────────────────────────────────────────
 
-export interface UserOut {
-  id: string;
-  email: string;
-  created_at: string;
+export interface UserCacheOut {
+  user_id: string;
+  display_name: string | null;
+  storage_quota_bytes: number;
   storage_used: number;
 }
 
-export interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
+// Backward compatibility alias
+export type UserOut = UserCacheOut;
+
+export interface NodeSessionResponse {
+  paired: boolean;
+  tunnel_status?: 'unpaired' | 'starting' | 'ready' | 'failed';
+  tunnel_ready?: boolean;
+  tunnel_error?: string | null;
+  node_id?: string | null;
+  subdomain?: string | null;
+  session_token?: string | null;
+  session_token_expires_at?: string | null;
+  user?: UserCacheOut | null;
 }
 
 export interface FileOut {
@@ -104,49 +147,45 @@ export interface DirectoryListing {
 export interface UploadInitiateResponse {
   file_id: string;
   upload_mode: 'single' | 'multipart';
+  upload_id?: string;
 }
 
-// ─── Auth API ────────────────────────────────────────────────────
+// ─── Node Pairing & Session API ──────────────────────────────────
 
-export async function apiSignup(email: string, password: string): Promise<UserOut> {
-  return fetchApi<UserOut>('/api/v1/auth/signup', {
+export async function apiGetNodeSession(): Promise<NodeSessionResponse> {
+  return fetchApi<NodeSessionResponse>('/api/v1/node-pairing/session');
+}
+
+export async function apiGetPairingStatus(): Promise<{
+  paired: boolean;
+  tunnel_status?: string;
+  tunnel_ready?: boolean;
+  tunnel_error?: string | null;
+  node_id?: string;
+  subdomain?: string;
+  session_token_expires_at?: string;
+}> {
+  return fetchApi('/api/v1/node-pairing/status');
+}
+
+export async function apiRestartTunnel(): Promise<{ status: string; message: string }> {
+  return fetchApi<{ status: string; message: string }>('/api/v1/node-pairing/tunnel/restart', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
   });
 }
 
-export async function apiLogin(email: string, password: string): Promise<TokenResponse> {
-  return fetchApi<TokenResponse>('/api/v1/auth/login', {
+export async function apiClaimPairing(
+  pairing_code: string,
+  central_url?: string,
+): Promise<{
+  status: string;
+  node_id?: string;
+  session_token_expires_at?: string;
+  subdomain?: string;
+}> {
+  return fetchApi('/api/v1/node-pairing/claim', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export async function apiRefreshToken(refreshToken: string): Promise<TokenResponse> {
-  return fetchApi<TokenResponse>(`/api/v1/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`, {
-    method: 'POST',
-  });
-}
-
-export async function apiGetMe(): Promise<UserOut> {
-  return fetchApi<UserOut>('/api/v1/auth/me');
-}
-
-export async function apiForgotPassword(email: string): Promise<{ message: string }> {
-  return fetchApi<{ message: string }>('/api/v1/auth/forgot-password', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
-  });
-}
-
-export async function apiResetPassword(
-  email: string,
-  otp: string,
-  newPassword: string,
-): Promise<{ message: string }> {
-  return fetchApi<{ message: string }>('/api/v1/auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({ email, otp, new_password: newPassword }),
+    body: JSON.stringify({ pairing_code, central_url }),
   });
 }
 
@@ -174,7 +213,7 @@ export async function apiDeleteFolder(folderId: string): Promise<{ status: strin
 }
 
 export async function apiDownloadFile(fileId: string): Promise<void> {
-  const token = getAccessToken();
+  const token = getSessionToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -183,6 +222,9 @@ export async function apiDownloadFile(fileId: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/v1/files/${fileId}/download`, { headers });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      notifySessionExpired();
+    }
     throw new Error(`Download failed: ${res.status}`);
   }
 
@@ -252,7 +294,7 @@ export async function apiUploadSingle(
   fileId: string,
   file: File,
 ): Promise<{ status: string }> {
-  const token = getAccessToken();
+  const token = getSessionToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -267,6 +309,10 @@ export async function apiUploadSingle(
     body: formData,
   });
 
+  if (res.status === 401) {
+    notifySessionExpired();
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.detail || 'Upload failed');
@@ -280,7 +326,7 @@ export async function apiUploadPart(
   partNumber: number,
   chunk: Blob,
 ): Promise<{ part_number: number; etag: string }> {
-  const token = getAccessToken();
+  const token = getSessionToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -297,6 +343,10 @@ export async function apiUploadPart(
       body: formData,
     },
   );
+
+  if (res.status === 401) {
+    notifySessionExpired();
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

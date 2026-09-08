@@ -3,7 +3,7 @@ from pathlib import Path
 from logging.config import fileConfig
 import asyncio
 
-from app.models import file, file_share, share_link
+from app.models import file, file_share, share_link, folder, user
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -13,7 +13,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.config import settings
 from app.db.base import Base
-from app.models import user  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

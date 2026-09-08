@@ -1,8 +1,11 @@
+import logging
 from typing import Any, AsyncGenerator
 import aioboto3
 from botocore.exceptions import ClientError
 
 from app.config import settings
+
+log = logging.getLogger("cachette.s3")
 
 class S3Service:
     def __init__(self) -> None:
@@ -22,6 +25,23 @@ class S3Service:
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
+
+    async def ensure_bucket_exists(self) -> None:
+        try:
+            async with self._client() as client:
+                try:
+                    await client.head_bucket(Bucket=self.bucket)
+                    log.info("S3 bucket '%s' verified.", self.bucket)
+                except ClientError as e:
+                    code = str(e.response.get("Error", {}).get("Code"))
+                    if code in ("404", "NoSuchBucket", "NotFound"):
+                        log.info("S3 bucket '%s' not found. Creating...", self.bucket)
+                        await client.create_bucket(Bucket=self.bucket)
+                        log.info("S3 bucket '%s' created successfully.", self.bucket)
+                    else:
+                        raise
+        except Exception as e:
+            log.warning("Unable to ensure S3 bucket exists: %s", e)
 
     # ------------------------------------------------------------------
     # Multipart Upload
